@@ -1,0 +1,23 @@
+{
+  "name": "cse316-final-group-project",
+  "version": "1.0.0",
+  "description": "* Server Address 13.125.58.162   \r * Server Key : PinkBean   \r * User Name : ec2-user",
+  "main": "final_project.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CrispenChisina07/CSE316-Final-Group-Project.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CrispenChisina07/CSE316-Final-Group-Project/issues"
+  },
+  "homepage": "https://github.com/CrispenChisina07/CSE316-Final-Group-Project#readme",
+  "dependencies": {
+    "express": "^4.17.1",
+    "mysql2": "^2.2.5"
+  }
+}
