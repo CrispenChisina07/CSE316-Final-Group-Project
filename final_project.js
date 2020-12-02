@@ -84,45 +84,45 @@ port = process.env.PORT || 3000;
 
  var save;
 
-function loginpage(req, res){
-        res.writeHead(200, { "Content-Type": "text/html"});
-        let query = url.parse(req.url, true).query;
+ function loginpage(req, res){
+    res.writeHead(200, { "Content-Type": "text/html"});
+    let query = url.parse(req.url, true).query;
 
-        let html = `
-        <!DOCTYPE html>
-        <html>
-        <body>
-        <head>
-        </head>
-        <h2> Login Page</h2>
+    let html = `
+    <!DOCTYPE html>
+    <html>
+    <body>
+    <head>
+    </head>
+    <h2> Login Page</h2>
 
-        <form method="get" action ="/login">
-            LabID:<input type="text" id ="labID" name="labID" value="">
-            <br><br>
-            Password: <input type="text" id ="password" name="password" value="">
-            <br><br>
-            <input type="button" id ="logC" onclick="authenticate()" value="Login Collector">
-            <input type="button" id ="labLog" onclick="authenticate2()"  value="Lab login">
-        </form>
-        <script>
-            function authenticate(){
-                var labId = document.getElementById('labID').value;
-                var password = document.getElementById('password').value;
-                var logCol = document.getElementById('logC').value;
-                location.href= "/auth1?id="+labId+"&passwrd="+password;
-            }
-            function authenticate2(){
-                var labId = document.getElementById('labID').value;
-                var password = document.getElementById('password').value;
-                var labLog = document.getElementById('labLog').value
-                location.href= "/auth2?passwrd="+password;
-            }
-        </script>
-        </body>
-        </html>`
-    res.write(html);
-    res.end();
-};
+    <form method="get" action ="/login">
+        LabID:<input type="text" id ="labID" name="labID" value="">
+        <br><br>
+        Password: <input type="text" id ="password" name="password" value="">
+        <br><br>
+        <input type="button" id ="logC" onclick="authenticate()" value="Login Collector">
+        <input type="button" id ="labLog" onclick="authenticate2()"  value="Lab login">
+    </form>
+    <script>
+        function authenticate(){
+            var labId = document.getElementById('labID').value;
+            var password = document.getElementById('password').value;
+            var logCol = document.getElementById('logC').value;
+            location.href= "/auth1?id="+labId+"&passwrd="+password;
+        }
+        function authenticate2(){
+            var labId = document.getElementById('labID').value;
+            var password = document.getElementById('password').value;
+            var labLog = document.getElementById('labLog').value
+            location.href= "/auth2?id="+labId+"&passwrd="+password;
+        }
+    </script>
+    </body>
+    </html>`
+res.write(html);
+res.end();
+}
 
 function testCollection(req, res){
     res.writeHead(200, { "Content-Type": "text/html"});
@@ -673,7 +673,8 @@ function credAuth1(req, res){
     let query =  url.parse(req.url, true).query;
     let passwrd = query.passwrd ? query.passwrd : "";
     let labId = query.id ? query.id : "";
-    let sql = `SELECT labID FROM LabEmployee WHERE password = '` + passwrd + `';`;
+    let sql = `SELECT labID FROM LabEmployee WHERE password = '` + passwrd + `' AND labID = ` + labId + `;`;
+    
     
     con.query(sql, function(err, result) {
         if(err) throw err;
@@ -704,7 +705,7 @@ function credAuth1(req, res){
                 </body>
                 <script>
                     function Alerts() {
-                        alert("Wrong Password");
+                        alert("Wrong Password or LabID");
                         location.href='/login';
                     }
                 </script>
@@ -718,7 +719,8 @@ function credAuth1(req, res){
 function credAuth2(req, res){
     let query =  url.parse(req.url, true).query;
     let passwrd = query.passwrd ? query.passwrd : "";
-    let sql = `SELECT labID FROM LabEmployee WHERE password = '` + passwrd + `';`;
+    let labId = query.id ? query.id : "";
+    let sql = `SELECT labID FROM LabEmployee WHERE password = '` + passwrd + `' AND labID = ` + labId + `;`;
 
     con.query(sql, function(err, result) {
         if(err) throw err;
@@ -748,7 +750,7 @@ function credAuth2(req, res){
                 </body>
                 <script>
                     function Alerts() {
-                        alert("Wrong Password");
+                        alert("Wrong Password or LabID");
                         location.href='/login';
                     }
                 </script>
@@ -780,8 +782,9 @@ function emplogin(req, res){
         </form>
         <script>
             function authenticate3(){
+                var email = document.getElementById('email').value;
                 var password = document.getElementById('password').value;
-                location.href= "/auth3?passwrd="+password;
+                location.href= "/auth3?emailemp="+email+"&passwrd="+password;
             }
         </script>
         </body>
@@ -793,7 +796,7 @@ function emplogin(req, res){
 function employeeHome(req, res) {
     let query = url.parse(req.url, true).query;
     let empID = query.empID ? query.empID : "";
-    let sql =  `SELECT EmployeeTest.collectionTime, WellTesting.result from WellTesting LEFT JOIN EmployeeTest on WellTesting.poolBarcode IN (SELECT poolBarcode FROM PoolMap WHERE testBarcode IN (SELECT testBarcode from EmployeeTest where employeeID = '` + empID + `') GROUP BY poolBarcode) WHERE employeeID = '` + empID + `' GROUP BY result;`;
+    let sql =  `SELECT WellTesting.testingEndTime, WellTesting.result from WellTesting LEFT JOIN EmployeeTest on WellTesting.poolBarcode IN (SELECT poolBarcode FROM PoolMap WHERE testBarcode IN (SELECT testBarcode from EmployeeTest where employeeID = '` + empID + `') GROUP BY poolBarcode) WHERE employeeID = '` + empID + `' GROUP BY result;`;
     let html = ``;
     con.query(sql, function(err, result) {
         if(err) { html = `
@@ -845,7 +848,7 @@ function employeeHome(req, res) {
             </tr>`
                 for(let re of result) {
                     html += `<tr>
-                                <td>` + re.collectionTime + `</td>
+                                <td>` + re.testingEndTime + `</td>
                                 <td>` + re.result + `</td>
                             </tr>`
                 }
@@ -862,7 +865,8 @@ function employeeHome(req, res) {
 function credAuth3(req, res){
     let query =  url.parse(req.url, true).query;
     let passwrd = query.passwrd ? query.passwrd : "";
-    let sql = `SELECT employeeID FROM Employee WHERE passcode = '` + passwrd + `';`;
+    let emailemp = query.emailemp ? query.emailemp : "";
+    let sql = `SELECT employeeID FROM Employee WHERE passcode = '` + passwrd + `' AND email = '` + emailemp + `';`;
 
     con.query(sql, function(err, result) {
         if(err) throw err;
@@ -872,7 +876,7 @@ function credAuth3(req, res){
                 <html>
                 <head>
                 </head>
-                <body onload='login()'>
+                <body onload="login()">
                 </body>
                 <script>
                     function login() {
@@ -892,7 +896,7 @@ function credAuth3(req, res){
                 </body>
                 <script>
                     function Alerts() {
-                        alert("Wrong Password");
+                        alert("Wrong Password or Email");
                         location.href='/employee_login';
                     }
                 </script>
@@ -972,7 +976,7 @@ function wells(wb, pb, r, res) {
 };
 
 function wellT(wb, pb, resu) {
-    let sql = `INSERT INTO WellTesting(poolBarcode, wellBarcode, testingStartTime, result) VALUES('` + pb + `', '` + wb + `', NOW(), '` + resu + `');`;
+    let sql = `INSERT INTO WellTesting(poolBarcode, wellBarcode, testingStartTime, testingEndTime, result) VALUES('` + pb + `', '` + wb + `', NOW(), NOW(), '` + resu + `');`;
     con.query(sql, function(err) {
         if(err) throw err;
     });

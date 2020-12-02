@@ -1,5 +1,7 @@
 USE Final_P;
 
+SELECT WellTesting.testingEndTime, WellTesting.result from WellTesting LEFT JOIN EmployeeTest on WellTesting.poolBarcode IN (SELECT poolBarcode FROM PoolMap WHERE testBarcode IN (SELECT testBarcode from EmployeeTest where employeeID = '111') GROUP BY poolBarcode) WHERE employeeID = '111' GROUP BY result;
+
 INSERT INTO Employee values('111', 'aaa@gmail.com', 'a', 'aa', 'abc');
 INSERT INTO Employee values('222', 'bbb@gmail.com', 'b', 'bb', 'bcd');
 INSERT INTO Employee values('333', 'ccc@gmail.com', 'c', 'cc', 'cde');
