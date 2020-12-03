@@ -16,6 +16,7 @@ const app = express();
 const url = require('url');
 const { isArray } = require('util');
 const { query } = require('express');
+const { Console } = require('console');
 
 app.get("/login", (req, res) =>{
     loginpage(req, res);
@@ -226,7 +227,7 @@ function poolMapping(req, res) {
     let testB = query.testb ? query.testb : "";
     let upda = query.update ? query.update : "";
     if(PoolB != "" && testB != "") {
-        if(upda == false) {
+        if(upda == 'false') {
             pools(PoolB, testB);
         } else {
             upoolm(PoolB, testB);
@@ -794,71 +795,107 @@ function emplogin(req, res){
 };
 
 function employeeHome(req, res) {
+    let pbsa = new Array();
     let query = url.parse(req.url, true).query;
     let empID = query.empID ? query.empID : "";
-    let sql =  `SELECT WellTesting.testingEndTime, WellTesting.result from WellTesting LEFT JOIN EmployeeTest on WellTesting.poolBarcode IN (SELECT poolBarcode FROM PoolMap WHERE testBarcode IN (SELECT testBarcode from EmployeeTest where employeeID = '` + empID + `') GROUP BY poolBarcode) WHERE employeeID = '` + empID + `' GROUP BY result;`;
+    let sql =  `SELECT WellTesting.testingEndTime, WellTesting.result from WellTesting 
+                LEFT JOIN EmployeeTest on WellTesting.poolBarcode IN (SELECT poolBarcode FROM PoolMap WHERE testBarcode IN (SELECT testBarcode from EmployeeTest where employeeID = '` + empID +`') GROUP BY poolBarcode) WHERE employeeID = '` + empID +`';`;
+    let sql2 = `SELECT poolBarcode FROM PoolMap WHERE testBarcode IN (SELECT testBarcode from EmployeeTest where employeeID = '` + empID + `');`;
     let html = ``;
-    con.query(sql, function(err, result) {
-        if(err) { html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-        </head>
-        <body onload='goBack()'>
-        <script>
-            function goBack(){
-                alert('Oops! Error Occurs!');
-                location.href='/employee_login';
+    con.query(sql+sql2, function(err, result) {
+        if(err) throw err;
+        var sqlresult1 = result[0]; // <- sql
+        var sqlresult2 = result[1]; // <- sql2
+        for(let pbs of sqlresult2) {
+            pbsa.push(pbs.poolBarcode);
+        }
+        let sql3 = ``;
+        for(let pb of pbsa) {
+             sql3 += `SELECT COUNT(PoolMap.testBarcode) from PoolMap WHERE poolBarcode ='` + pb + `';`;
+        }
+            con.query(sql3, function(err, result2) {
+                if(err) {
+                    html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                </head>
+                <body onload='goBack()'>
+                <script>
+                    function goBack(){
+                        alert('Oops! Error Occurs!');
+                        location.href='/employee_login';
+                    }
+                </script>
+                </body>
+                </html>`;
+                res.write(html);
+                res.end(); 
+                } else {
+                let html = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Employee Home</title>
+                    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+                    <style>
+                        #barcode_list {
+                            margin-top: 15px;
+                            border-collapse: collapse;
+                            table-layout: fixed; word-break; break-all;
+                        }
+        
+                        #barcode_list th {
+                            border: 2px solid black;
+                        }
+        
+                        #barcode_list td {
+                            border: 2px solid black;
+                            text-align: center;
+                        }
+                    </style>
+                </head>
+                <body>
+                <h4 style='margin-left: 200px'>Employee Home</h4>
+                <table id='barcode_list' style='width: 60%;'>
+                    <tr>
+                        <th>Collection Date</th>
+                        <th>Result</th>
+                    </tr>`
+                        for(var i = 0; i < sqlresult1.length; i++) {
+                            if(result2[i][0]['COUNT(PoolMap.testBarcode)'] > 1 && sqlresult1[i].result == "Positive") {
+                                html += `<tr>
+                                            <td>` + sqlresult1[i].testingEndTime + `</td>
+                                            <td> In Progress </td>
+                                        </tr>`;
+                                    }
+                            else if(result2[i][0]['COUNT(PoolMap.testBarcode)'] > 1 && sqlresult1[i].result == "Negative") {
+                                html += `<tr>
+                                            <td>` + sqlresult1[i].testingEndTime + `</td>
+                                            <td>` + sqlresult1[i].result + `</td>
+                                        </tr>`;
+                                    }
+                            else if(result2[i][0]['COUNT(PoolMap.testBarcode)'] == 1 && sqlresult1[i].result == "Positive") {
+                                html += `<tr>
+                                            <td>` + sqlresult1[i].testingEndTime + `</td>
+                                            <td>` + sqlresult1[i].result + `</td>
+                                        </tr>`;
+                                }
+                            else {
+                                html += `<tr>
+                                            <td>` + sqlresult1[i].testingEndTime + `</td>
+                                            <td>` + sqlresult1[i].result + `</td>
+                                        </tr>`;
+                            }
+                        }
+                `</table>
+                </body>
+                </html>
+            `;
+            res.write(html);
+            res.end();
             }
-        </script>
-        </body>
-        </html>`;
-        res.write(html);
-        res.end(); 
-        } else {
-        let html = `
-        <!DOCTYPE html>
-        <html>
-        <head>
-            <title>Employee Home</title>
-            <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
-            <style>
-                #barcode_list {
-                    margin-top: 15px;
-                    border-collapse: collapse;
-                    table-layout: fixed; word-break; break-all;
-                }
-
-                #barcode_list th {
-                    border: 2px solid black;
-                }
-
-                #barcode_list td {
-                    border: 2px solid black;
-                    text-align: center;
-                }
-            </style>
-        </head>
-        <body>
-        <h4 style='margin-left: 200px'>Employee Home</h4>
-        <table id='barcode_list' style='width: 60%;'>
-            <tr>
-                <th>Collection Date</th>
-                <th>Result</th>
-            </tr>`
-                for(let re of result) {
-                    html += `<tr>
-                                <td>` + re.testingEndTime + `</td>
-                                <td>` + re.result + `</td>
-                            </tr>`
-                }
-        `</table>
-        </body>
-        </html>
-    `;
-    res.write(html);
-    res.end();
-    }
+        });
     });
 };
 

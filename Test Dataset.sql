@@ -1,6 +1,12 @@
 USE Final_P;
 
-SELECT WellTesting.testingEndTime, WellTesting.result from WellTesting LEFT JOIN EmployeeTest on WellTesting.poolBarcode IN (SELECT poolBarcode FROM PoolMap WHERE testBarcode IN (SELECT testBarcode from EmployeeTest where employeeID = '111') GROUP BY poolBarcode) WHERE employeeID = '111' GROUP BY result;
+delete from pool where poolBarcode='003';
+
+SELECT * FROM Pool;
+SELECT * FROM PoolMap;
+SELECT * FROM EmployeeTest;
+SELECT * FROM WellTesting;
+SELECT WellTesting.testingEndTime, WellTesting.result, PoolMap.testBarcode from WellTesting LEFT JOIN EmployeeTest on WellTesting.poolBarcode IN (SELECT poolBarcode FROM PoolMap WHERE testBarcode IN (SELECT testBarcode from EmployeeTest where employeeID = '111')) LEFT JOIN PoolMap ON PoolMap.poolBarcode IN (SELECT poolBarcode FROM PoolMap WHERE testBarcode IN (SELECT testBarcode from EmployeeTest where employeeID = '111')) WHERE employeeID = '111';
 
 INSERT INTO Employee values('111', 'aaa@gmail.com', 'a', 'aa', 'abc');
 INSERT INTO Employee values('222', 'bbb@gmail.com', 'b', 'bb', 'bcd');
