@@ -678,7 +678,7 @@ function credAuth1(req, res){
     
     
     con.query(sql, function(err, result) {
-        if(err) throw err;
+        //if(err) throw err;
         if(result.length > 0) {
             save = labId;
             let html = `
@@ -724,7 +724,7 @@ function credAuth2(req, res){
     let sql = `SELECT labID FROM LabEmployee WHERE password = '` + passwrd + `' AND labID = ` + labId + `;`;
 
     con.query(sql, function(err, result) {
-        if(err) throw err;
+        //if(err) throw err;
         if(result.length > 0) {
             let html = `
                 <!DOCTYPE html>
@@ -863,6 +863,7 @@ function employeeHome(req, res) {
                         <th>Result</th>
                     </tr>`
                         for(var i = 0; i < sqlresult1.length; i++) {
+                            if(pbsa.length > 1) {
                             if(result2[i][0]['COUNT(PoolMap.testBarcode)'] > 1 && sqlresult1[i].result == "Positive") {
                                 html += `<tr>
                                             <td>` + sqlresult1[i].testingEndTime + `</td>
@@ -886,6 +887,32 @@ function employeeHome(req, res) {
                                             <td>` + sqlresult1[i].testingEndTime + `</td>
                                             <td>` + sqlresult1[i].result + `</td>
                                         </tr>`;
+                                }
+                            } else {
+                                if(result2[0]['COUNT(PoolMap.testBarcode)'] > 1 && sqlresult1[i].result == "Positive") {
+                                    html += `<tr>
+                                                <td>` + sqlresult1[i].testingEndTime + `</td>
+                                                <td> In Progress </td>
+                                            </tr>`;
+                                        }
+                                else if(result2[0]['COUNT(PoolMap.testBarcode)'] > 1 && sqlresult1[i].result == "Negative") {
+                                    html += `<tr>
+                                                <td>` + sqlresult1[i].testingEndTime + `</td>
+                                                <td>` + sqlresult1[i].result + `</td>
+                                            </tr>`;
+                                        }
+                                else if(result2[0]['COUNT(PoolMap.testBarcode)'] == 1 && sqlresult1[i].result == "Positive") {
+                                    html += `<tr>
+                                                <td>` + sqlresult1[i].testingEndTime + `</td>
+                                                <td>` + sqlresult1[i].result + `</td>
+                                            </tr>`;
+                                    }
+                                else {
+                                    html += `<tr>
+                                                <td>` + sqlresult1[i].testingEndTime + `</td>
+                                                <td>` + sqlresult1[i].result + `</td>
+                                            </tr>`;
+                                    }
                             }
                         }
                 `</table>
@@ -1033,7 +1060,7 @@ function deletes(req, res) {
     
     if(wellb == "" && poolb != "") {
         let sql = `DELETE FROM PoolMap WHERE poolBarcode = '` + poolb + `';`;
-        let sql2 = `DELETE FROM Pool WHERE poolBarcode ='` + wellb + `';`;
+        let sql2 = `DELETE FROM Pool WHERE poolBarcode ='` + poolb + `';`;
         con.query(sql + sql2, function(err) {
             if(err) throw err;
             let html = `
